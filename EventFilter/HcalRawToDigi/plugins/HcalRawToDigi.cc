@@ -22,6 +22,7 @@ HcalRawToDigi::HcalRawToDigi(edm::ParameterSet const& conf):
   unpackCalib_(conf.getUntrackedParameter<bool>("UnpackCalib",false)),
   unpackZDC_(conf.getUntrackedParameter<bool>("UnpackZDC",false)),
   unpackTTP_(conf.getUntrackedParameter<bool>("UnpackTTP",false)),
+  separateUMNioQIE_(conf.getUntrackedParameter<bool>("SeparateUMNioQIE",false)),
   unpackUMNio_(conf.getUntrackedParameter<bool>("UnpackUMNio",false)),
   silent_(conf.getUntrackedParameter<bool>("silent",true)),
   complainEmptyData_(conf.getUntrackedParameter<bool>("ComplainEmptyData",false)),
@@ -66,6 +67,8 @@ HcalRawToDigi::HcalRawToDigi(edm::ParameterSet const& conf):
   produces<QIE10DigiCollection>();
   produces<QIE11DigiCollection>();
   produces<QIE10DigiCollection>("ZDC");
+  if (separateUMNioQIE_)
+    produces<QIE10DigiCollection>("UMNIO");
   
   memset(&stats_,0,sizeof(stats_));
 
@@ -84,6 +87,7 @@ void HcalRawToDigi::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.addUntracked<bool>("UnpackZDC",true);
   desc.addUntracked<bool>("UnpackCalib",true);
   desc.addUntracked<bool>("UnpackUMNio",true);
+  desc.addUntracked<bool>("separateUMNioQIE",true);
   desc.addUntracked<bool>("UnpackTTP",true);
   desc.addUntracked<bool>("silent",true);
   desc.addUntracked<bool>("ComplainEmptyData",false);
@@ -208,6 +212,10 @@ void HcalRawToDigi::produce(edm::Event& e, const edm::EventSetup& es)
     colls.qie10ZDC = new QIE10DigiCollection(); 
   }
   std::unique_ptr<QIE10DigiCollection> qie10ZDC_prod(colls.qie10ZDC);
+  if (colls.qie10UMNio == 0) {
+    colls.qie10UMNio = new QIE10DigiCollection(); 
+  }
+  std::unique_ptr<QIE10DigiCollection> qie10UMNio_prod(colls.qie10UMNio);
   if (colls.qie11 == 0) {
     colls.qie11 = new QIE11DigiCollection(); 
   }
@@ -244,6 +252,7 @@ void HcalRawToDigi::produce(edm::Event& e, const edm::EventSetup& es)
   hotp_prod->sort();
   qie10_prod->sort();
   qie10ZDC_prod->sort();
+  qie10UMNio_prod->sort();
   qie11_prod->sort();
 
   e.put(std::move(hbhe_prod));
@@ -253,6 +262,7 @@ void HcalRawToDigi::produce(edm::Event& e, const edm::EventSetup& es)
   e.put(std::move(hotp_prod));
   e.put(std::move(qie10_prod));
   e.put(std::move(qie10ZDC_prod),"ZDC");
+  e.put(std::move(qie10UMNio_prod),"UMNioQIE");
   e.put(std::move(qie11_prod));
 
   /// calib

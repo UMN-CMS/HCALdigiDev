@@ -690,6 +690,14 @@ void HcalUnpacker::unpackUTCA(const FEDRawData& raw, const HcalElectronicsMap& e
 	  edm::LogError("Invalid Data") << "QIE10ZDC Collection has " << colls.qie10ZDC->samples() << " samples per digi, raw data has " << ns << "!";
 	  return;
 	}
+	if (colls.qie10UMNio == 0) {
+	  colls.qie10UMNio = new QIE10DigiCollection(ns);
+	}
+	else if (colls.qie10UMNio->samples() != ns) {
+	  // This is horrible
+	  edm::LogError("Invalid Data") << "QIE10UMNioQIE Collection has " << colls.qie10UMNio->samples() << " samples per digi, raw data has " << ns << "!";
+	  return;
+	}
 	
 	if (colls.qie10 == 0) {
 	  colls.qie10 = new QIE10DigiCollection(ns);
@@ -705,6 +713,9 @@ void HcalUnpacker::unpackUTCA(const FEDRawData& raw, const HcalElectronicsMap& e
 	if (!did.null() && did.det()==DetId::Calo && did.subdetId()==HcalZDCDetId::SubdetectorId) { // unpack and store...
 		colls.qie10ZDC->addDataFrame(did, head_pos);
 	} 
+        else if (!did.null() && crate == 38) {
+                colls.qie10UMNio->addDataFrame(did, head_pos);
+        }
 	else if (!did.null()) { // unpack and store...
 		colls.qie10->addDataFrame(did, head_pos);
 	} else {
